@@ -2,7 +2,7 @@ name: Mise à jour Agenda
 
 on:
   schedule:
-    - cron: '35 1 * * *'  # tous les jours à 7h00 UTC
+    - cron: '45 1 * * *'  # tous les jours à 7h00 UTC
   workflow_dispatch: # pour lancement manuel
 
 jobs:
