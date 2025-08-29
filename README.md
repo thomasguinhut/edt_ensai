@@ -89,11 +89,15 @@ Le script peut être automatisé avec GitHub Actions grâce au fichier `daily-sy
 
 ### Configuration des secrets GitHub
 
-Dans les paramètres de votre dépôt GitHub (Settings, Secrets and variables, Actions, New repository secret), ajoutez les variables suivants :
+Dans les paramètres de votre dépôt GitHub :
 
-- `ICS_URL`
-- `CALENDAR_ID` 
-- `GOOGLE_CREDENTIALS`
-- `NOTIFY_EMAIL` (optionnel)
-- `SMTP_USER` (optionnel)
-- `SMTP_PASSWORD` (optionnel)
+1. Allez dans **Settings → Secrets and variables → Actions**.
+2. Cliquez sur **New repository secret**.
+3. Ajoutez les variables suivantes :
+    - `ICS_URL` : valeur attendue
+4. Refaire les étapes 2 et 3 pour :
+    - `CALENDAR_ID` 
+    - `GOOGLE_CREDENTIALS`
+    - `NOTIFY_EMAIL` (optionnel)
+    - `SMTP_USER` (optionnel)
+    - `SMTP_PASSWORD` (optionnel)
