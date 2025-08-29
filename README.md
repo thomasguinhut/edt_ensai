@@ -1,6 +1,6 @@
 # Synchronisation automatique d'un EDT au format ICS avec Google Calendar
 
-Ce projet de synchroniser automatiquement un emploi du temps au format ICS (récupérable à partir d'une URL) vers un agenda déjà créé sur son compte Google Calendar. Il est notamment utilisable pour son EDT personnel à l'Ensai, disponible depuis Pamplemousse.
+Ce projet permet de synchroniser automatiquement un emploi du temps au format ICS (récupérable à partir d'une URL ouverte) vers un agenda déjà créé sur son compte Google Calendar. Il est notamment utilisable pour son EDT personnel à l'Ensai, disponible depuis Pamplemousse.
 
 Une notification du bon déroulement de la mise à jour quotidienne est éventuellement possible par mail. Si elle n'est pas souhaitée, le paramètre dans la fonction main doit être mis en FALSE.
 
@@ -44,13 +44,11 @@ Le script nécessite les variables d'environnement suivantes :
 - `SMTP_USER` : Nom d'utilisateur SMTP
 - `SMTP_PASSWORD` : Mot de passe SMTP
 
-## Prérequis pour une configuration manuelle
+## Prérequis pour une utilisation manuelle (pour tester)
 
-### Importation du projet en local depuis le terminal de VS Code
-```bash
-git clone https://github.com/thomasguinhut/edt_ensai
-cd edt_ensai
-```
+### Variables d'environnement
+
+Les variables sont à définir dans un token edt-ensai sur la plateforme Onyxia utilisée pour lancer le script.
 
 ### Dépendances Python
 
@@ -59,11 +57,14 @@ Installez les dépendances :
 pip install -r requirements.txt
 ```
 
-### Variables d'environnement
+### Création du service sur Onixya
 
-Les variables sont à définir dans un token edt-ensai sur la plateforme Onyxia utilisée pour lancer le script.
+1. Créez un nouveau service Rstudio sur Onixya
+2. Ajouter l'URL du repository dans les paramètres : https://github.com/thomasguinhut/edt_ensai dans 
+3. Lancer et ouvrir le dossier parent du projet
 
 ### Éxéxution du script
+
 ```bash
 python main.py
 ```
