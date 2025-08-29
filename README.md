@@ -52,7 +52,7 @@ Les variables sont à définir dans un token edt-ensai sur la plateforme Onyxia 
 
 ### Création du service sur Onixya 
 
-1. Créez un nouveau service Rstudio sur Onixya
+1. Créez un nouveau service Python sur Onixya
 2. Ajouter l'URL du repository dans les paramètres : https://github.com/thomasguinhut/edt_ensai 
 3. Lancer et ouvrir le dossier parent du projet
 
