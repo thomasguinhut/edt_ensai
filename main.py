@@ -147,8 +147,8 @@ def update_google_calendar(ics_content, calendar_id):
         to_email = os.getenv('NOTIFY_EMAIL')
         if to_email:
             send_email(
-                subject=f"Agenda {calendar_id} mis à jour",
-                body=f"{imported_count} événements ont été importés depuis le fichier ICS.",
+                subject="EDT 3A MSP",
+                body="L'EDT a été mis à jour !",
                 to_email=to_email
             )
     except Exception as e:
