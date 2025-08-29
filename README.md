@@ -50,6 +50,12 @@ Le script nécessite les variables d'environnement suivantes :
 
 Les variables sont à définir dans un token edt-ensai sur la plateforme Onyxia utilisée pour lancer le script.
 
+### Création du service sur Onixya
+
+1. Créez un nouveau service Rstudio sur Onixya
+2. Ajouter l'URL du repository dans les paramètres : https://github.com/thomasguinhut/edt_ensai 
+3. Lancer et ouvrir le dossier parent du projet
+
 ### Dépendances Python
 
 Installez les dépendances :
@@ -57,13 +63,7 @@ Installez les dépendances :
 pip install -r requirements.txt
 ```
 
-### Création du service sur Onixya
-
-1. Créez un nouveau service Rstudio sur Onixya
-2. Ajouter l'URL du repository dans les paramètres : https://github.com/thomasguinhut/edt_ensai dans 
-3. Lancer et ouvrir le dossier parent du projet
-
-### Éxéxution du script
+### Exéxution du script
 
 ```bash
 python main.py
@@ -80,7 +80,12 @@ Le script peut être automatisé avec GitHub Actions grâce au fichier `daily-sy
 3. Sélectionnez votre compte GitHub
 4. GitHub crée une copie complète du projet sur votre compte
 
-Puis dans les paramètre du service créé sur Onyxia, mettre https://github.com/<votre-utilisateur>/<nom-du-fork>.git.
+### Création du service sur Onixya
+
+1. Créez un nouveau service Rstudio sur Onixya
+2. Ajouter l'URL du repository dans les paramètres : `https://github.com/<votre-utilisateur>/<nom-du-fork>.git`
+3. Lancer et ouvrir le dossier parent du projet
+
 
 ### Configuration des secrets GitHub
 
