@@ -1,6 +1,9 @@
 import os
 import json
 import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from datetime import datetime
@@ -12,6 +15,7 @@ def log(message):
     print(f"{datetime.now()}: {message}")
 
 
+# --- Gestion ICS ---
 def download_ics_file(url):
     """Télécharge le fichier ICS depuis l'URL."""
     try:
@@ -30,48 +34,33 @@ def parse_ics_to_events(ics_content):
     try:
         cal = Calendar.from_ical(ics_content)
         events = []
-
         for component in cal.walk():
             if component.name == "VEVENT":
                 summary = str(component.get('summary', 'Sans titre'))
                 description = str(component.get('description', ''))
                 location = str(component.get('location', ''))
-
                 dtstart = component.get('dtstart')
                 dtend = component.get('dtend')
-
                 if dtstart and dtend:
                     start_dt = dtstart.dt
                     end_dt = dtend.dt
-
                     if isinstance(start_dt, datetime):
                         event = {
                             'summary': summary,
                             'description': description,
                             'location': location,
-                            'start': {
-                                'dateTime': start_dt.isoformat(),
-                                'timeZone': 'Europe/Paris',
-                            },
-                            'end': {
-                                'dateTime': end_dt.isoformat(),
-                                'timeZone': 'Europe/Paris',
-                            },
+                            'start': {'dateTime': start_dt.isoformat(), 'timeZone': 'Europe/Paris'},
+                            'end': {'dateTime': end_dt.isoformat(), 'timeZone': 'Europe/Paris'},
                         }
                     else:
                         event = {
                             'summary': summary,
                             'description': description,
                             'location': location,
-                            'start': {
-                                'date': start_dt.strftime('%Y-%m-%d'),
-                            },
-                            'end': {
-                                'date': end_dt.strftime('%Y-%m-%d'),
-                            },
+                            'start': {'date': start_dt.strftime('%Y-%m-%d')},
+                            'end': {'date': end_dt.strftime('%Y-%m-%d')},
                         }
                     events.append(event)
-
         log(f"Parsing terminé : {len(events)} événements extraits.")
         return events
     except Exception as e:
@@ -79,12 +68,11 @@ def parse_ics_to_events(ics_content):
         raise
 
 
+# --- Gestion Google Calendar ---
 def clear_google_calendar(service, calendar_id):
     """Supprime TOUS les événements d'un agenda Google."""
     log(f"Suppression de tous les événements de l'agenda {calendar_id}...")
     deleted_count = 0
-
-    # Récupère les événements par pages
     events_result = service.events().list(calendarId=calendar_id, maxResults=250).execute()
     while True:
         events = events_result.get('items', [])
@@ -94,19 +82,46 @@ def clear_google_calendar(service, calendar_id):
                 deleted_count += 1
             except Exception as e:
                 log(f"Erreur lors de la suppression de l'événement {event['id']}: {e}")
-
         next_page_token = events_result.get('nextPageToken')
         if not next_page_token:
             break
         events_result = service.events().list(
             calendarId=calendar_id, maxResults=250, pageToken=next_page_token
         ).execute()
-
     log(f"Supprimé {deleted_count} événement(s) au total.")
 
 
+# --- Envoi de mail ---
+def send_email(subject, body, to_email):
+    """Envoie un email via SMTP."""
+    try:
+        smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
+        smtp_port = int(os.getenv('SMTP_PORT', 587))
+        smtp_user = os.getenv('SMTP_USER')
+        smtp_password = os.getenv('SMTP_PASSWORD')
+
+        if not smtp_user or not smtp_password:
+            log("SMTP_USER ou SMTP_PASSWORD non défini.")
+            return
+
+        msg = MIMEMultipart()
+        msg['From'] = smtp_user
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_user, smtp_password)
+        server.send_message(msg)
+        server.quit()
+        log(f"Email envoyé à {to_email}")
+    except Exception as e:
+        log(f"Erreur lors de l'envoi de l'email : {e}")
+
+
+# --- Mise à jour du calendrier ---
 def update_google_calendar(ics_content, calendar_id):
-    """Met à jour Google Agenda avec le contenu ICS."""
     try:
         google_credentials = json.loads(os.getenv('GOOGLE_CREDENTIALS'))
         creds = Credentials.from_service_account_info(
@@ -114,14 +129,10 @@ def update_google_calendar(ics_content, calendar_id):
             scopes=['https://www.googleapis.com/auth/calendar']
         )
         service = build('calendar', 'v3', credentials=creds)
-
-        # Supprime tous les événements existants
+        
         clear_google_calendar(service, calendar_id)
-
-        # Parse et importe les nouveaux événements
         parsed_events = parse_ics_to_events(ics_content)
-        log(f"Importation de {len(parsed_events)} événements...")
-
+        
         imported_count = 0
         for event_data in parsed_events:
             try:
@@ -129,29 +140,41 @@ def update_google_calendar(ics_content, calendar_id):
                 imported_count += 1
             except Exception as e:
                 log(f"Erreur lors de l'ajout d'un événement : {e}")
-                log(f"Données de l'événement : {event_data}")
-
+        
         log(f"Agenda {calendar_id} mis à jour avec succès ! {imported_count} événements importés.")
-
+        
+        # Envoi du mail de notification
+        to_email = os.getenv('NOTIFY_EMAIL')
+        if to_email:
+            send_email(
+                subject=f"Agenda {calendar_id} mis à jour",
+                body=f"{imported_count} événements ont été importés depuis le fichier ICS.",
+                to_email=to_email
+            )
     except Exception as e:
         log(f"Erreur lors de la mise à jour : {e}")
+        to_email = os.getenv('NOTIFY_EMAIL')
+        if to_email:
+            send_email(
+                subject=f"Échec de la mise à jour de l'agenda {calendar_id}",
+                body=str(e),
+                to_email=to_email
+            )
         raise
 
 
+# --- Main ---
 def main():
     try:
         ics_url = os.getenv('ICS_URL')
         calendar_id = os.getenv('CALENDAR_ID')
-
         if not ics_url:
             raise ValueError("L'URL du fichier ICS (ICS_URL) n'est pas définie.")
         if not calendar_id:
             raise ValueError("L'ID de l'agenda (CALENDAR_ID) n'est pas défini.")
-
         log(f"Utilisation de l'agenda : {calendar_id}")
         ics_content = download_ics_file(ics_url)
         update_google_calendar(ics_content, calendar_id)
-
     except Exception as e:
         log(f"Échec : {e}")
         exit(1)
