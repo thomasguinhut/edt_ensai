@@ -1,0 +1,37 @@
+name: Synchronisation EDT quotidienne
+
+on:
+  schedule:
+    # Exécution tous les jours à 11h00 UTC (12h en heure française en hiver, 13h en été)
+    - cron: '10 8 * * *'
+  workflow_dispatch: # Permet l'exécution manuelle
+
+jobs:
+  sync-calendar:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Run sync script
+      env:
+        ICS_URL: ${{ secrets.ICS_URL }}
+        CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+        SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+        SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        SMTP_USER: ${{ secrets.SMTP_USER }}
+        SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      run: python votre_script.py
