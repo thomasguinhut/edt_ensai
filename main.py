@@ -15,20 +15,7 @@ def log(message):
     print(f"{datetime.now()}: {message}")
 
 
-# --- Gestion du fichier ICS ---
 def download_ics_file(url):
-    """
-    Télécharge le fichier ICS depuis une URL donnée.
-
-    Args:
-        url (str): URL du fichier ICS à télécharger.
-
-    Returns:
-        bytes: Contenu brut du fichier ICS.
-
-    Raises:
-        Exception: En cas d'erreur de téléchargement.
-    """
     try:
         log(f"Téléchargement du fichier ICS depuis {url}...")
         response = requests.get(url)
@@ -41,18 +28,6 @@ def download_ics_file(url):
 
 
 def parse_ics_to_events(ics_content):
-    """
-    Parse le contenu ICS et convertit les événements en format compatible avec Google Calendar.
-
-    Args:
-        ics_content (bytes): Contenu brut du fichier ICS.
-
-    Returns:
-        list[dict]: Liste des événements au format Google Calendar.
-
-    Raises:
-        Exception: En cas d'erreur de parsing.
-    """
     try:
         cal = Calendar.from_ical(ics_content)
         events = []
@@ -90,18 +65,7 @@ def parse_ics_to_events(ics_content):
         raise
 
 
-# --- Gestion de Google Calendar ---
 def clear_google_calendar(service, calendar_id):
-    """
-    Supprime tous les événements d'un agenda Google.
-
-    Args:
-        service: Objet de service Google Calendar authentifié.
-        calendar_id (str): ID de l'agenda à vider.
-
-    Returns:
-        None
-    """
     log(f"Suppression de tous les événements de l'agenda {calendar_id}...")
     deleted_count = 0
     events_result = service.events().list(calendarId=calendar_id, maxResults=250).execute()
@@ -122,19 +86,7 @@ def clear_google_calendar(service, calendar_id):
     log(f"Supprimé {deleted_count} événement(s) au total.")
 
 
-# --- Envoi d'email ---
 def send_email(subject, body, to_email):
-    """
-    Envoie un email via SMTP.
-
-    Args:
-        subject (str): Sujet de l'email.
-        body (str): Corps de l'email.
-        to_email (str): Adresse email du destinataire.
-
-    Returns:
-        None
-    """
     try:
         smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
         smtp_port = int(os.getenv('SMTP_PORT', 587))
@@ -158,21 +110,7 @@ def send_email(subject, body, to_email):
         log(f"Erreur lors de l'envoi de l'email : {e}")
 
 
-# --- Mise à jour du calendrier ---
-def update_google_calendar(ics_content, calendar_id):
-    """
-    Met à jour un agenda Google avec les événements d'un fichier ICS.
-
-    Args:
-        ics_content (bytes): Contenu brut du fichier ICS.
-        calendar_id (str): ID de l'agenda Google à mettre à jour.
-
-    Returns:
-        None
-
-    Raises:
-        Exception: En cas d'erreur lors de la mise à jour.
-    """
+def update_google_calendar(ics_content, calendar_id, send_notification=True):
     try:
         google_credentials = json.loads(os.getenv('GOOGLE_CREDENTIALS'))
         creds = Credentials.from_service_account_info(
@@ -180,10 +118,8 @@ def update_google_calendar(ics_content, calendar_id):
             scopes=['https://www.googleapis.com/auth/calendar']
         )
         service = build('calendar', 'v3', credentials=creds)
-
         clear_google_calendar(service, calendar_id)
         parsed_events = parse_ics_to_events(ics_content)
-
         imported_count = 0
         for event_data in parsed_events:
             try:
@@ -191,12 +127,11 @@ def update_google_calendar(ics_content, calendar_id):
                 imported_count += 1
             except Exception as e:
                 log(f"Erreur lors de l'ajout d'un événement : {e}")
-
         log(f"Agenda {calendar_id} mis à jour avec succès ! {imported_count} événements importés.")
 
-        # Envoi du mail de notification
+        # Envoi du mail de notification si activé
         to_email = os.getenv('NOTIFY_EMAIL')
-        if to_email:
+        if send_notification and to_email:
             send_email(
                 subject="EDT 3A MSP",
                 body="L'EDT a été mis à jour !",
@@ -205,7 +140,7 @@ def update_google_calendar(ics_content, calendar_id):
     except Exception as e:
         log(f"Erreur lors de la mise à jour : {e}")
         to_email = os.getenv('NOTIFY_EMAIL')
-        if to_email:
+        if send_notification and to_email:
             send_email(
                 subject=f"Échec de la mise à jour de l'agenda {calendar_id}",
                 body=str(e),
@@ -214,11 +149,7 @@ def update_google_calendar(ics_content, calendar_id):
         raise
 
 
-# --- Fonction principale ---
-def main():
-    """
-    Fonction principale : télécharge le fichier ICS et met à jour l'agenda Google.
-    """
+def main(send_notification=True):
     try:
         ics_url = os.getenv('ICS_URL')
         calendar_id = os.getenv('CALENDAR_ID')
@@ -228,11 +159,12 @@ def main():
             raise ValueError("L'ID de l'agenda (CALENDAR_ID) n'est pas défini.")
         log(f"Utilisation de l'agenda : {calendar_id}")
         ics_content = download_ics_file(ics_url)
-        update_google_calendar(ics_content, calendar_id)
+        update_google_calendar(ics_content, calendar_id, send_notification=send_notification)
     except Exception as e:
         log(f"Échec : {e}")
         exit(1)
 
 
 if __name__ == '__main__':
-    main()
+    # Par défaut, l'envoi d'email est activé
+    main(send_notification=True)
