@@ -1,6 +1,6 @@
-# Synchronisation automatique de l'EDT de l'Ensai avec Google Calendar
+# Synchronisation automatique d'un EDT au format ICS avec Google Calendar
 
-Ce projet de synchroniser automatiquement un emploi du temps au format ICS (récupérable à partir d'une URL) vers un agenda Google Calendar. Il est notamment utilisable pour son EDT personnel à l'Ensai, disponible depuis Pamplemousse.
+Ce projet de synchroniser automatiquement un emploi du temps au format ICS (récupérable à partir d'une URL) vers un agenda déjà créé sur son compte Google Calendar. Il est notamment utilisable pour son EDT personnel à l'Ensai, disponible depuis Pamplemousse.
 
 Une notification du bon déroulement de la mise à jour quotidienne est éventuellement possible par mail. Si elle n'est pas souhaitée, le paramètre dans la fonction main doit être mis en FALSE.
 
@@ -8,12 +8,12 @@ Une notification du bon déroulement de la mise à jour quotidienne est éventue
 
 ```
 edt_ensai/
-├── main.py                    # Script principal
-├── requirements.txt           # Dépendances Python
-├── README.md                 # Ce fichier
+├── main.py                    
+├── requirements.txt          
+├── README.md                 
 └── .github/
     └── workflows/
-        └── daily-sync.yml    # Workflow GitHub Actions
+        └── daily-sync.yml    
 ```
 
 ## Prérequis généraux
@@ -46,6 +46,12 @@ Le script nécessite les variables d'environnement suivantes :
 
 ## Prérequis pour une configuration manuelle
 
+### Importation du projet en local depuis le terminal de VS Code
+```bash
+git clone https://github.com/thomasguinhut/edt_ensai
+cd edt_ensai
+```
+
 ### Dépendances Python
 
 Installez les dépendances :
@@ -65,6 +71,15 @@ python main.py
 ## Prérequis pour une automatisation avec GitHub Actions
 
 Le script peut être automatisé avec GitHub Actions grâce au fichier `daily-sync.yml` présent dans `.github/workflows/`. Ce fichier fixe la mise à jour quotidienne à 02h UTC (03h en heure française en hiver, 04h en été).
+
+### Forker le projet
+
+1. Allez sur la page GitHub du projet : https://github.com/thomasguinhut/edt_ensai
+2. Cliquez en haut à droite sur Fork
+3. Sélectionnez votre compte GitHub
+4. GitHub crée une copie complète du projet sur votre compte
+
+Puis dans les paramètre du service créé sur Onyxia, mettre https://github.com/<votre-utilisateur>/<nom-du-fork>.git.
 
 ### Configuration des secrets GitHub
 
